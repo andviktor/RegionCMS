@@ -1,0 +1,18 @@
+{% extends "base_generic.html" %}
+
+{% block title %}Удаление страницы{% endblock %}
+{% block header %}Удаление страницы{% endblock %}
+
+{% block breadcrumbs %}
+    {% if page %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/cms/">Сайты</a></li>
+        <li class="breadcrumb-item"><a href="/cms/site/{{ page.site.pk }}">{{ page.site.title }}</a></li>
+        <li class="breadcrumb-item active">{{ page.title }}</li>
+    </ol>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    {% include "forms/common_confirm_delete.html" with delete_object_title=page.title %}
+{% endblock %}

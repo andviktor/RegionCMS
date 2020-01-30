@@ -1,0 +1,19 @@
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Roboto Condensed', sans-serif;
+}
+
+.subitem-marker span {
+    position: relative;
+    top: -7px;
+    left: 3px;
+}
+
+input.dark-input, textarea.dark-input, select.dark-input,
+input.dark-input:focus, textarea.dark-input:focus, select.dark-input:focus {
+    color: #8c9aa9;
+    background-color: #161a25;
+}
+
+textarea.log {
+    font-size: 12px;
+}

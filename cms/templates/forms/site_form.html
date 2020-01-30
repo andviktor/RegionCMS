@@ -1,0 +1,21 @@
+{% extends "base_generic.html" %}
+
+{% block title %}Настройки сайта{% endblock %}
+{% block header %}Настройки сайта{% endblock %}
+
+{% block breadcrumbs %}
+    {% if site %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/cms/">Сайты</a></li>
+        <li class="breadcrumb-item active">{{ site.title }}</li>
+    </ol>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    <div class="alert alert-dismissible alert-secondary">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <p><strong>Внимание!</strong></p><p>Все подключаемые файлы (css, js, картинки и др.) должны быть размещены в папке 'build_assets/название сайта'.</p><p>После сборки сайта, содержимое этой папки будет загружено в папки поддоменов в подпапку 'assets'</p></a>
+    </div>
+    {% include "forms/common_form.html" %}
+{% endblock %}

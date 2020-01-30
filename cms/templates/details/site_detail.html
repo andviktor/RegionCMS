@@ -1,0 +1,197 @@
+{% extends "base_generic.html" %}
+
+{% load app_filters %}
+
+{% block title %}Сайт «{{ site.title }}»{% endblock %}
+{% block header %}Сайт «{{ site.title }}»{% endblock %}
+
+{% block breadcrumbs %}
+<ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/cms/">Сайты</a></li>
+    <li class="breadcrumb-item active">{{ site.title }}</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="col card-columns">
+            <!-- Управление -->
+            <div class="card border-light text-white bg-secondary mb-3">
+                <div class="card-header"><h5 class="mb-0">Сборка и загрузка на сервер</h5></div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <textarea class="form-control dark-input log" id="exampleTextarea" rows="10">{{ site.log }}</textarea>
+                    </div>
+                </div>
+                <div class="card-footer text-muted d-flex justify-content-between align-items-center">
+                    <a href="{% url 'site-build' site.pk %}" class="btn btn-primary btn-sm">Собрать проект</a>
+                    <a href="{% url 'site-upload' site.pk %}" class="btn btn-success btn-sm">Загрузить на сервер</a>
+                </div>
+            </div>
+            <!-- Конец блока Управление -->
+            <!-- Настройки -->
+            <div class="card border-light text-white bg-secondary mb-3">
+                <div class="card-header"><h5 class="mb-0">Настройки</h5></div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-12 col-md-6"><p><b>Домен:</b><br />{{ site.domain }}</p></div>
+                        <div class="col-sm-12 col-md-6"><p><b>FTP:</b><br />{{ site.ftp_host }}<br />{{ site.ftp_user }}<br />{{ site.ftp_password }}</p></div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <p><b>Robots.txt</b></p>
+                            <pre>{{ site.robots }}</pre>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-muted">
+                    <a href="{% url 'site-edit' site.pk %}" class="btn btn-outline-light btn-sm">Изменить настройки</a>
+                </div>
+            </div>
+            <!-- Конец блока Настройки -->
+            <!-- Регионы -->
+            <div class="card border-warning text-white bg-secondary mb-3">
+                <div class="card-header"><h5 class="mb-0">Регионы</h5></div>
+                <div class="card-body px-0 py-0">
+                    <div class="list-group">
+                        {% for region in site.region_set.all %}
+                        <a href="{% url 'region-edit' region.pk %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            {{ region.title }}
+                            <span class="badge badge-warning">{{ region.alias }}.{{ site.domain }}</span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-footer text-muted">
+                    <a href="{% url 'region-create' site.pk %}" class="btn btn-outline-warning btn-sm">Добавить регион</a>
+                </div>
+            </div>
+            <!-- Конец блока Регионы -->
+            <!-- Страницы -->
+            <div class="card border-primary text-white bg-secondary mb-3">
+                <div class="card-header"><h5 class="mb-0">Страницы</h5></div>
+                <div class="card-body px-0 py-0">
+                    <div class="list-group">
+                        {% for page in site.page_set.all %}
+                            
+                            {% if not page.parent %}
+                                <a href="{% url 'page-edit' page.pk %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                    <div>
+                                        {{ page.title }}
+                                        {% if page.placeholder_set.count %}
+                                            <div>
+                                            <span class="badge badge-success">{{ page.template.title }}</span>
+                                            {% for placeholder in page.placeholder_set.all|order_by:"title" %}
+                                                <span class="badge badge-danger">{{ placeholder.title }}</span>
+                                            {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <span class="badge badge-primary">{{ page.alias }}</span>
+                                </a>
+                                <!-- Subpage level 1 -->
+                                {% if page.pk|get_child_pages %}
+                                    {% for subpage_level_1 in page.pk|get_child_pages %}
+                                        <a href="{% url 'page-edit' subpage_level_1.pk %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                            <div>
+                                                {{ subpage_level_1.title }}
+                                                {% if subpage_level_1.placeholder_set.count %}
+                                                    <div>
+                                                    <span class="badge badge-success">{{ subpage_level_1.template.title }}</span>
+                                                    {% for placeholder in subpage_level_1.placeholder_set.all|order_by:"title" %}
+                                                        <span class="badge badge-danger">{{ placeholder.title }}</span>
+                                                    {% endfor %}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            <span class="badge badge-primary">{{ page.alias }}{{ subpage_level_1.alias }}</span>
+                                        </a>
+                                        <!-- Subpage level 2 -->
+                                            {% if subpage_level_1.pk|get_child_pages %}
+                                            {% for subpage_level_2 in subpage_level_1.pk|get_child_pages %}
+                                                <a href="{% url 'page-edit' subpage_level_2.pk %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                                    <div class="subitem-marker"><span>&brvbar;</span>&rarr; {{ subpage_level_2.title }}
+                                                        {% if subpage_level_2.placeholder_set.count %}
+                                                            <div class="mt-2">
+                                                            <span class="badge badge-success">{{ subpage_level_2.template.title }}</span>
+                                                            {% for placeholder in subpage_level_2.placeholder_set.all|order_by:"title" %}
+                                                                <span class="badge badge-danger">{{ placeholder.title }}</span>
+                                                            {% endfor %}
+                                                            </div>
+                                                        {% endif %}
+                                                    </div class="subitem-marker">
+                                                    <span class="badge badge-primary">{{ page.alias }}{{ subpage_level_1.alias }}/{{ subpage_level_2.alias }}</span>
+                                                </a>
+                                                <!-- Subpage level 3 -->
+                                                    {% if subpage_level_2.pk|get_child_pages %}
+                                                    {% for subpage_level_3 in subpage_level_2.pk|get_child_pages %}
+                                                        <a href="{% url 'page-edit' subpage_level_3.pk %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                                            <div class="subitem-marker ml-3"><span>&brvbar;</span>&rarr; {{ subpage_level_3.title }}
+                                                                {% if subpage_level_3.placeholder_set.count %}
+                                                                    <div class="mt-2">
+                                                                    <span class="badge badge-success">{{ subpage_level_3.template.title }}</span>
+                                                                    {% for placeholder in subpage_level_2.placeholder_set.all|order_by:"title" %}
+                                                                        <span class="badge badge-danger">{{ placeholder.title }}</span>
+                                                                    {% endfor %}
+                                                                    </div>
+                                                                {% endif %}
+                                                            </div class="subitem-marker">
+                                                            <span class="badge badge-primary">{{ page.alias }}{{ subpage_level_1.alias }}/{{ subpage_level_2.alias }}/{{ subpage_level_3.alias }}</span>
+                                                        </a>
+                                                    {% endfor %}
+                                                {% endif %}
+                                                <!-- end of Subpage level 3 -->
+                                            {% endfor %}
+                                        {% endif %}
+                                        <!-- end of Subpage level 2 -->
+                                    {% endfor %}
+                                {% endif %}
+                                <!-- end of Subpage level 1 -->
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-footer text-muted">
+                    <a href="{% url 'page-create' site.pk %}" class="btn btn-outline-primary btn-sm">Добавить страницу</a>
+                </div>
+            </div>
+            <!-- Конец блока Страницы -->
+            <!-- Шаблоны -->
+            <div class="card border-success text-white bg-secondary mb-3">
+                <div class="card-header"><h5 class="mb-0">Шаблоны</h5></div>
+                <div class="card-body px-0 py-0">
+                    <div class="list-group">
+                        {% for template in site.template_set.all %}
+                            <a href="{% url 'template-edit' template.pk %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                {{ template.title }}
+                                <span class="badge badge-success">шаблон</span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-footer text-muted">
+                    <a href="{% url 'template-create' site.pk %}" class="btn btn-outline-success btn-sm">Добавить шаблон</a>
+                </div>
+            </div>
+            <!-- Конец блока Шаблоны -->
+            <!-- Чанки -->
+            <div class="card border-info text-white bg-secondary mb-3">
+                <div class="card-header"><h5 class="mb-0">Чанки</h5></div>
+                <div class="card-body px-0 py-0">
+                    <div class="list-group">
+                        {% for chunk in site.chunk_set.all %}
+                            <a href="{% url 'chunk-edit' chunk.pk %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                {{ chunk.title }}
+                                <span class="badge badge-info">чанк</span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-footer text-muted">
+                    <a href="{% url 'chunk-create' site.pk %}" class="btn btn-outline-info btn-sm">Добавить чанк</a>
+                </div>
+            </div>
+            <!-- Конец блока Чанки -->
+        </div>
+    </div>
+{% endblock %}

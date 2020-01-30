@@ -1,0 +1,24 @@
+{% extends "base_generic.html" %}
+
+{% block title %}Настройки региона{% endblock %}
+{% block header %}Настройки региона{% endblock %}
+
+{% block breadcrumbs %}
+    {% if region %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/cms/">Сайты</a></li>
+        <li class="breadcrumb-item"><a href="/cms/site/{{ region.site.pk }}">{{ region.site.title }}</a></li>
+        <li class="breadcrumb-item active">{{ region.title }}</li>
+    </ol>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    {% include "forms/common_form.html" %}
+    {% if region %}
+    <hr />
+    <div class="text-right">
+        <a href="{% url 'region-delete' region.pk %}" class="btn btn-outline-danger">Удалить</a>
+    </div>
+    {% endif %}
+{% endblock %}

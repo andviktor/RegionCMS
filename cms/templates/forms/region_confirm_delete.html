@@ -1,0 +1,18 @@
+{% extends "base_generic.html" %}
+
+{% block title %}Удаление региона{% endblock %}
+{% block header %}Удаление региона{% endblock %}
+
+{% block breadcrumbs %}
+    {% if region %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/cms/">Сайты</a></li>
+        <li class="breadcrumb-item"><a href="/cms/site/{{ region.site.pk }}">{{ region.site.title }}</a></li>
+        <li class="breadcrumb-item active">{{ region.title }}</li>
+    </ol>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    {% include "forms/common_confirm_delete.html" with delete_object_title=region.title %}
+{% endblock %}

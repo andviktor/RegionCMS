@@ -1,0 +1,50 @@
+{% extends "base_generic.html" %}
+
+{% block title %}Настройки страницы{% endblock %}
+{% block header %}Настройки страницы{% endblock %}
+
+{% block breadcrumbs %}
+    {% if page %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/cms/">Сайты</a></li>
+        <li class="breadcrumb-item"><a href="/cms/site/{{ page.site.pk }}">{{ page.site.title }}</a></li>
+        <li class="breadcrumb-item active">{{ page.title }}</li>
+    </ol>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="col">
+            {% include "forms/common_form.html" %}
+        </div>
+        {% if page %}
+        <div class="col">
+            <!-- Плейсхолдеры -->
+            <div class="card border-info text-white bg-secondary mb-3">
+                <div class="card-header"><h5 class="mb-0">Плейсхолдеры</h5></div>
+                <div class="card-body px-0 py-0">
+                    <div class="list-group">
+                        {% for placeholder in page.placeholder_set.all %}
+                            <a href="{% url 'placeholder-edit' placeholder.pk %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                {{ placeholder.title }}
+                                <span class="badge badge-info">плейсхолдер</span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-footer text-muted">
+                    <a href="{% url 'placeholder-create' page.pk %}" class="btn btn-outline-info btn-sm">Добавить плейсхолдер</a>
+                </div>
+            </div>
+            <!-- Конец блока Плейсхолдеры -->
+        </div>
+        {% endif %}
+    </div>
+    {% if page %}
+    <hr />
+    <div class="text-right">
+        <a href="{% url 'page-delete' page.pk %}" class="btn btn-outline-danger">Удалить</a>
+    </div>
+    {% endif %}
+{% endblock %}

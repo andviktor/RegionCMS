@@ -1,0 +1,25 @@
+{% extends "base_generic.html" %}
+
+{% block title %}Настройки плейсхолдера{% endblock %}
+{% block header %}Настройки плейсхолдера{% endblock %}
+
+{% block breadcrumbs %}
+    {% if placeholder.page %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/cms/">Сайты</a></li>
+        <li class="breadcrumb-item"><a href="/cms/site/{{ placeholder.page.site.pk }}">{{ placeholder.page.site.title }}</a></li>
+        <li class="breadcrumb-item"><a href="/cms/page/{{ placeholder.page.pk }}/edit">{{ placeholder.page.title }}</a></li>
+        <li class="breadcrumb-item active">{{ placeholder.title }}</li>
+    </ol>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    {% include "forms/common_form.html" %}
+    {% if placeholder %}
+    <hr />
+    <div class="text-right">
+        <a href="{% url 'placeholder-delete' placeholder.pk %}" class="btn btn-outline-danger">Удалить</a>
+    </div>
+    {% endif %}
+{% endblock %}

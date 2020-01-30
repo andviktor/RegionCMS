@@ -1,0 +1,35 @@
+<div class="row">
+    <div class="col">
+        <form method="POST">
+            <fieldset>
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="form-group">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {% if 'Textarea' in field.field.widget|safe %}
+                            <textarea class="form-control dark-input" name="{{ field.html_name }}" rows="10">{{ field.value }}</textarea>
+                        {% elif 'Select' in field.field.widget|safe %}
+                            <select class="form-control dark-input" name="{{ field.html_name }}">
+                                {% for option in field.subwidgets %}
+                                    {{ option.tag }}
+                                {% endfor %}
+                            </select>
+                        {% elif 'CheckboxInput' in field.field.widget|safe %}
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="{{ field.id_for_label }}" name="{{ field.html_name }}" value="True" {% if field.value %}checked="checked"{% endif %}>
+                                <label class="custom-control-label" for="{{ field.id_for_label }}">{{ field.help_text }}</label>
+                            </div>
+                        {% else %}
+                            <input class="form-control dark-input" name="{{ field.html_name }}" placeholder="{{ field.help_text }}" value="{{ field.value }}">
+                        {% endif %}
+                        {% if field.help_text and 'CheckboxInput' not in field.field.widget|safe  %}
+                            <small id="emailHelp" class="form-text text-muted">{{ field.help_text }}</small>
+                        {% endif %}
+                        {{ field.errors }}
+                    </div>
+                {% endfor %}
+                <button type="submit" class="save btn btn-primary">Сохранить</button>
+            </fieldset>
+        </form>
+    </div>
+</div>
