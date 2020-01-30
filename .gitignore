@@ -1,4 +1,3 @@
 *.code-workspace
-*.sqlite3
 build/*
 build_assets/*
