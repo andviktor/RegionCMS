@@ -10,6 +10,7 @@ class Site(models.Model):
     ftp_user = models.CharField(max_length=30, default="", verbose_name="FTP пользователь")
     ftp_password = models.CharField(max_length=30, default="", verbose_name="FTP пароль")
     robots = models.TextField(default="", help_text="Директивы HOST и SITEMAP не указываются, они проставляются автоматически.", verbose_name="Robots.txt")
+    favicon = models.CharField(max_length=50, default="assets/images/icons/favicon/favicon.ico", verbose_name="Фавикон")
     log = models.TextField(default="")
     build = models.CharField(max_length=30, default="", blank=True)
     upload_date = models.CharField(max_length=30, default="", blank=True)
@@ -62,6 +63,7 @@ class Page(models.Model):
     template = models.ForeignKey(Template, on_delete=models.CASCADE, verbose_name="Шаблон")
     metatitle = models.CharField(max_length=80, default="", verbose_name="META-title")
     metadescription = models.TextField(max_length=170, default="", verbose_name="META-description")
+    sitemap_priority = models.CharField(max_length=5, default="1.0", verbose_name="Приоритет для Sitemap.xml")
    
     def __str__(self):
         return self.site.title + " / " + self.title

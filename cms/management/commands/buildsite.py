@@ -6,6 +6,25 @@ import re, os, sys, random, json, datetime, zipfile, shutil
 class Command(BaseCommand):
     help = 'Print current site title'
 
+    # Формируем полный адрес страницы с учетом вложенности
+    def get_full_page_dir(self, tmp_page):
+
+        tmp_page_source = tmp_page
+
+        full_page_dir = ''
+
+        if hasattr(tmp_page.parent, 'alias'):
+            while hasattr(tmp_page.parent, 'alias'):
+                if tmp_page.parent.alias != '/':
+                    full_page_dir = '/' + str(tmp_page.parent.alias) + full_page_dir
+                    tmp_page = tmp_page.parent
+                else:
+                    break
+        else:
+            full_page_dir = '/'
+
+        return full_page_dir
+
     def uniqwords(self, source_html):
         operand_group_list = []
         tmp_html = str(source_html)
@@ -77,6 +96,7 @@ class Command(BaseCommand):
         parser.add_argument('site_titles', nargs='+')
 
     def handle(self, *args, **options):
+           
         today = datetime.datetime.today()
         for site_title in options['site_titles']:
             
@@ -154,7 +174,7 @@ class Command(BaseCommand):
                         try:
                             chunk_search = re.search(r'\[\[\$.+\]\]', template_html)
                             chunk_name = chunk_search.group(0).replace('[[$','').replace(']]','')
-                            chunk = Chunk.objects.get(title=chunk_name)
+                            chunk = Chunk.objects.get(title=chunk_name, site=site.id)
                             template_html = template_html.replace(chunk_search.group(0),chunk.html)
                         except:
                             break
@@ -361,32 +381,15 @@ class Command(BaseCommand):
                     # self.stdout.write(site.title + '(' + region.title + '): ' + page.title + ' > код сформирован')
 
                     # Формируем полный адрес страницы с учетом вложенности
-                    tmp_page = page
-
-                    full_page_path = ''
-                    full_page_dir = ''
-
-                    if hasattr(tmp_page.parent, 'alias'):
-                        while hasattr(tmp_page.parent, 'alias'):
-                            if tmp_page.parent.alias != '/':
-                                full_page_path = '/' + str(tmp_page.parent.alias) + full_page_path
-                                full_page_dir = '/' + str(tmp_page.parent.alias) + full_page_dir
-                                tmp_page = tmp_page.parent
-                            else:
-                                break
-                        full_page_path = full_page_path + '/' + str(page.alias) + '.html'
-                    else:
-                        full_page_path = '/index.html'
-
-                    full_page_path = full_page_path.replace('//','/')
+                    full_page_dir = self.get_full_page_dir(page)
 
                     # Создаем временную папку в соответствии с адресом страницы
                     path = os.getcwd()
                     path = path + '/build/'
                     if region.main_region:
-                        new_dir = path + site.title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/' + site.domain + '/public_html' + full_page_dir
+                        new_dir = path + site.title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/' + full_page_dir
                     else:
-                        new_dir = path + site.title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/' + region.alias + '.' + site.domain + '/public_html' + full_page_dir
+                        new_dir = path + site.title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/' + region.alias + '/public_html' + full_page_dir
                     
                     try:
                         os.makedirs(new_dir, exist_ok=True)
@@ -414,21 +417,57 @@ class Command(BaseCommand):
                     path = os.getcwd()
                     assets_path = path + '/build_assets/' + site.title + '/'
                     if region.main_region:
-                        subdomain_path = path + '/build/' + site_title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/' + site.domain + '/public_html/'
+                        subdomain_path = path + '/build/' + site_title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/'
                     else:
-                        subdomain_path = path + '/build/' + site_title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/' + region.alias + '.' + site.domain + '/public_html/'
+                        subdomain_path = path + '/build/' + site_title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/' + region.alias + '/public_html/'
                     shutil.copytree(assets_path, subdomain_path+'assets/')
                 except:
                     errors_count += 1
                     self.stdout.write('Ошибка копирования assets!')
 
-                # Создаем robots.txt в папке поддомена
+                # Копирование фавикона в корень поддомена
                 try:
                     path = os.getcwd()
                     if region.main_region:
-                        subdomain_path = path + '/build/' + site_title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/' + site.domain + '/public_html/'
+                        subdomain_path = path + '/build/' + site_title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/'
                     else:
-                        subdomain_path = path + '/build/' + site_title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/' + region.alias + '.' + site.domain + '/public_html/'
+                        subdomain_path = path + '/build/' + site_title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/' + region.alias + '/public_html/'
+                    shutil.copyfile(subdomain_path + site.favicon, subdomain_path + 'favicon.ico')
+                except:
+                    errors_count += 1
+                    self.stdout.write('Ошибка копирования favicon!')
+
+                # Создаем robots.txt в папке поддомена
+                # try:
+                #     path = os.getcwd()
+                #     subdomain_path = path + '/build/' + site_title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/'
+                #     if region.main_region:
+                #         robots = open(subdomain_path + 'robots_main.txt', 'w')
+                #     else:
+                #         robots = open(subdomain_path + 'robots_' + region.alias + '.txt', 'w')
+                        
+                #     robots.write(site.robots)
+
+                #     if site.ssl:
+                #         protocol = 'https://'
+                #     else:
+                #         protocol = 'http://'
+
+                #     if region.main_region:
+                #         robots.write('\nSitemap: ' + protocol + site.domain + '/sitemap.xml')
+                #     else:
+                #         robots.write('\nSitemap: ' + protocol + region.alias + '.' + site.domain + '/sitemap.xml')
+
+                #     robots.close()
+                # except:
+                #     errors_count += 1
+                #     self.stdout.write('Ошибка создания Robots.txt')
+                try:
+                    path = os.getcwd()
+                    if region.main_region:
+                        subdomain_path = path + '/build/' + site_title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/'
+                    else:
+                        subdomain_path = path + '/build/' + site_title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/' + region.alias + '/public_html/'
                     robots = open(subdomain_path + 'robots.txt', 'w')
                     robots.write(site.robots)
 
@@ -446,6 +485,73 @@ class Command(BaseCommand):
                 except:
                     errors_count += 1
                     self.stdout.write('Ошибка создания Robots.txt')
+                
+                # Создаем .htaccess в папке поддомена
+                try:
+                    path = os.getcwd()
+                    if region.main_region:
+                        subdomain_path = path + '/build/' + site_title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/'
+                    else:
+                        subdomain_path = path + '/build/' + site_title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/' + region.alias + '/'
+                    htaccess = open(subdomain_path + '.htaccess', 'w')
+                    
+                    if region.main_region:
+                        htaccess.write('RewriteEngine On')
+                        # Убираем .html
+                        htaccess.write('\nRewriteCond %{REQUEST_FILENAME} !-d')
+                        htaccess.write('\nRewriteCond %{REQUEST_FILENAME}\.html -f')
+                        # Универсальная переадресация поддоменов в директории
+                        htaccess.write('\nRewriteRule ^(.*)$ $1.html')
+                        htaccess.write('\nRewriteCond %{HTTP_HOST} ^(.*).' + site.domain + '$\nRewriteRule ^(.*)$ /%1/public_html/$1 [L]')
+                        # Правила обработки поддоменов для каждого региона
+                        # for region_item in regions:
+                        #     if region_item.main_region:
+                        #         continue
+                        #     else:
+                        #         htaccess.write('\nRewriteCond %{HTTP_HOST} ^' + region_item.alias + '\.' + site.domain + '$')
+                        #         htaccess.write('\nRewriteCond %{REQUEST_URI} !/' + region_item.alias + '/public_html/')
+                        #         htaccess.write('\nRewriteRule ^(.*)$ /' + region_item.alias + '/public_html/$1 [L]')
+                    else:
+                        htaccess.write('RewriteEngine On')
+
+                    htaccess.close()
+                except:
+                    errors_count += 1
+                    self.stdout.write('Ошибка создания .htaccess')
+
+                # Создаем sitemap.xml в папке поддомена
+                try:
+                    if site.ssl:
+                        protocol = 'https://'
+                    else:
+                        protocol = 'http://'
+
+                    path = os.getcwd()
+                    if region.main_region:
+                        subdomain_path = path + '/build/' + site_title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/'
+                        subdomain_domain = protocol + site.domain
+                    else:
+                        subdomain_path = path + '/build/' + site_title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/' + region.alias + '/public_html/'
+                        subdomain_domain = protocol + region.alias + '.' + site.domain
+
+                    sitemap = open(subdomain_path + 'sitemap.xml', 'w')
+
+                    sitemap.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n')
+		
+                    for page in site.page_set.all():
+                        if str(page.alias) != '/':
+                            full_page_path = subdomain_domain + self.get_full_page_dir(page) + '/' + str(page.alias)
+                        else:
+                            full_page_path = subdomain_domain + '/'
+
+                        sitemap.write('\t<url>\n\t\t<loc>' + full_page_path + '</loc>\n\t\t<lastmod>' + str(today.strftime("%Y-%m-%dT%H:%M:%S")) + '+01:00</lastmod>\n\t\t<priority>' + str(page.sitemap_priority) + '</priority>\n\t</url>\n')
+                    
+                    sitemap.write('</urlset>')
+                    sitemap.close()
+
+                except:
+                    errors_count += 1
+                    self.stdout.write('Ошибка создания Sitemap.xml')
             
             self.stdout.write('-----------------------------------------------------------------------')
             # Архивируем папку сборки

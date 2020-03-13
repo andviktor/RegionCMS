@@ -27,12 +27,12 @@ def upload_site(request, site_id):
 # site
 class SiteCreate(generic.CreateView):
     model = Site
-    fields = ['title', 'domain', 'ssl', 'ftp_host', 'ftp_user', 'ftp_password', 'robots']
+    fields = ['title', 'domain', 'ssl', 'ftp_host', 'ftp_user', 'ftp_password', 'robots', 'favicon']
     template_name = 'forms/site_form.html'
 
 class SiteUpdate(generic.UpdateView):
     model = Site
-    fields = ['title', 'domain', 'ssl', 'ftp_host', 'ftp_user', 'ftp_password', 'robots']
+    fields = ['title', 'domain', 'ssl', 'ftp_host', 'ftp_user', 'ftp_password', 'robots', 'favicon']
     template_name = 'forms/site_form.html'
 
 class SiteListView(generic.ListView):
@@ -121,7 +121,7 @@ class ChunkDelete(generic.DeleteView):
 # page
 class PageCreate(generic.CreateView):
     model = Page
-    fields = ['site', 'title', 'alias', 'parent', 'template', 'metatitle', 'metadescription']
+    fields = ['site', 'title', 'alias', 'parent', 'template', 'metatitle', 'metadescription', 'sitemap_priority']
     template_name = 'forms/page_form.html'
     def form_valid(self, form):
          site = Site.objects.get(pk=self.kwargs['site_id'])
@@ -132,7 +132,7 @@ class PageCreate(generic.CreateView):
 
 class PageUpdate(generic.UpdateView):
     model = Page
-    fields = ['site', 'title', 'alias', 'parent', 'template', 'metatitle', 'metadescription']
+    fields = ['site', 'title', 'alias', 'parent', 'template', 'metatitle', 'metadescription', 'sitemap_priority']
     template_name = 'forms/page_form.html'
     def get_success_url(self):
         return reverse('site-detail', kwargs={'pk': self.object.site.pk})
