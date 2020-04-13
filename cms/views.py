@@ -27,12 +27,12 @@ def upload_site(request, site_id):
 # site
 class SiteCreate(generic.CreateView):
     model = Site
-    fields = ['title', 'domain', 'ssl', 'ftp_host', 'ftp_user', 'ftp_password', 'robots', 'favicon']
+    fields = ['title', 'domain', 'ssl', 'hosting', 'ftp_host', 'ftp_user', 'ftp_password', 'robots', 'favicon']
     template_name = 'forms/site_form.html'
 
 class SiteUpdate(generic.UpdateView):
     model = Site
-    fields = ['title', 'domain', 'ssl', 'ftp_host', 'ftp_user', 'ftp_password', 'robots', 'favicon']
+    fields = ['title', 'domain', 'ssl', 'hosting', 'ftp_host', 'ftp_user', 'ftp_password', 'robots', 'favicon']
     template_name = 'forms/site_form.html'
 
 class SiteListView(generic.ListView):

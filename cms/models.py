@@ -6,6 +6,7 @@ class Site(models.Model):
     title = models.CharField(max_length=50, default="Новый сайт", verbose_name="Наименование")
     domain = models.CharField(max_length=50, default="mysite.ru", verbose_name="Домен")
     ssl = models.BooleanField(default=False, help_text="Сайт доступен по протоколу HTTPS", verbose_name="SSL сертификат")
+    hosting = models.CharField(max_length=50, help_text="beget,regru,timeweb", default="beget", verbose_name="Хостинг")
     ftp_host = models.CharField(max_length=20, default="", verbose_name="FTP хост")
     ftp_user = models.CharField(max_length=30, default="", verbose_name="FTP пользователь")
     ftp_password = models.CharField(max_length=30, default="", verbose_name="FTP пароль")
