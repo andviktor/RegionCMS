@@ -62,8 +62,8 @@ class Page(models.Model):
     alias = models.CharField(max_length=100, default="", help_text="Для главной \"/\", для остальных без слэшей", verbose_name="Псевдоним")
     parent = models.ForeignKey("self", on_delete=models.CASCADE, null=True, blank=True, help_text="Макс. 3 уровня, пример: /first/second/third, родитель не указывается только у главной страницы, для остальных страниц 1 уровня родитель - Главная", verbose_name="Родительская страница")
     template = models.ForeignKey(Template, on_delete=models.CASCADE, verbose_name="Шаблон")
-    metatitle = models.CharField(max_length=80, default="", verbose_name="META-title")
-    metadescription = models.TextField(max_length=170, default="", verbose_name="META-description")
+    metatitle = models.CharField(max_length=200, default="", verbose_name="META-title")
+    metadescription = models.TextField(max_length=300, default="", verbose_name="META-description")
     sitemap_priority = models.CharField(max_length=5, default="1.0", verbose_name="Приоритет для Sitemap.xml")
    
     def __str__(self):

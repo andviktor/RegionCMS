@@ -5,35 +5,37 @@
 
 {% block content %}
     {% if site_list %}
-        {% for site in site_list %}
-        <div class="card" style="width: 18rem;">
-            <img class="card-img-top" src="">
-            <div class="card-body pb-0">
-                <h5 class="card-title">{{ site.title }}</h5>
-                <span class="badge badge-pill badge-success">{{ site.domain }}</span>
-                <p class="card-text mt-2">
-                    <small class="d-flex justify-content-between align-items-center">
-                        <span>Регионов:</span> <span>{{ site.region_set.count }}</span>
-                    </small>
-                    <small class="d-flex justify-content-between align-items-center">
-                        <span>Страниц:</span> <span>{{ site.page_set.count }}</span>
-                    </small>
-                    <small class="d-flex justify-content-between align-items-center">
-                        <span>Последняя сборка:</span> <span>20.01.2020</span>
-                    </small>
-                    <small class="d-flex justify-content-between align-items-center">
-                        <span>Загрузка на сервер:</span> <span>20.01.2020</span>
-                    </small>
-                </p>
+        <div class="card-columns">
+            {% for site in site_list %}
+            <div class="card">
+                <img class="card-img-top" src="">
+                <div class="card-body pb-0">
+                    <h5 class="card-title">{{ site.title }}</h5>
+                    <span class="badge badge-pill badge-success">{{ site.domain }}</span>
+                    <p class="card-text mt-2">
+                        <small class="d-flex justify-content-between align-items-center">
+                            <span>Регионов:</span> <span>{{ site.region_set.count }}</span>
+                        </small>
+                        <small class="d-flex justify-content-between align-items-center">
+                            <span>Страниц:</span> <span>{{ site.page_set.count }}</span>
+                        </small>
+                        <small class="d-flex justify-content-between align-items-center">
+                            <span>Последняя сборка:</span> <span>20.01.2020</span>
+                        </small>
+                        <small class="d-flex justify-content-between align-items-center">
+                            <span>Загрузка на сервер:</span> <span>20.01.2020</span>
+                        </small>
+                    </p>
+                </div>
+                <hr />
+                <ul class="list-group list-group-flush mb-2">
+                    <li class="list-group-item">
+                        <a href="{% url 'site-detail' site.pk %}" class="btn btn-primary btn-sm">Управление</a>
+                    </li>
+                </ul>
             </div>
-            <hr />
-            <ul class="list-group list-group-flush mb-2">
-                <li class="list-group-item">
-                    <a href="{% url 'site-detail' site.pk %}" class="btn btn-primary btn-sm">Управление</a>
-                </li>
-            </ul>
+            {% endfor %}
         </div>
-        {% endfor %}
         <hr />
         <a href="{% url 'site-create' %}" class="btn btn-success"><span class="glyphicon glyphicon-plus"></span>Добавить сайт</a>
     {% else %}

@@ -108,7 +108,7 @@ class Command(BaseCommand):
             
             # Получаем регионы сайта
             try:
-                regions = site.region_set.all()
+                regions = site.region_set.all().order_by('title')
             except:
                 raise CommandError('Cant get regions for site "%s"' % site.title)
 
@@ -303,6 +303,7 @@ class Command(BaseCommand):
                                         if placeholder.uniqcodes == '':
                                             letsmakeuniqcodes = True
                                         
+                                    # Создаем все uniqcodes
                                     if letsmakeuniqcodes == True:
                                         # Формируем uniqcodes
                                         result_uniqcodes_dict = {}
@@ -314,6 +315,18 @@ class Command(BaseCommand):
                                             region_count += 1
                                         placeholder.uniqcodes = str(result_uniqcodes_dict)
                                         placeholder.save(update_fields=['uniqcodes'])
+
+                                    # Если есть новые регионы, создаем uniqcodes для них
+                                    for region_item in placeholder.page.site.region_set.all():
+                                        if region_item.alias not in placeholder.uniqcodes:
+                                            # Формируем uniqcodes
+                                            result_uniqcodes_dict = {}
+                                            result_uniqcodes = self.uniqtext(5, placeholder.html)
+                                            # Добавляем uniqcodes к общем словарю uniqcodes плейсхолдера
+                                            placeholder_uniqcodes_dict = json.loads(placeholder.uniqcodes.replace('\'','"'))
+                                            placeholder_uniqcodes_dict[region_item.alias] = result_uniqcodes[random.randint(0,4)]
+                                            placeholder.uniqcodes = str(placeholder_uniqcodes_dict)
+                                            placeholder.save(update_fields=['uniqcodes'])
 
                                 # Уникализация текста согласно полей уникализации
                                 placeholder_uniqwords_list = placeholder.uniqwords[2:-2].split('\', \'')
@@ -334,9 +347,42 @@ class Command(BaseCommand):
                                     needtosave = True
                                 if needtosave == True:
                                     placeholder.save(update_fields=['uniqcodes','uniqwords'])
-                                
+                            
+                            # ШАБЛОН > Заменяем в html коде падежи
+                            template_html = template_html.replace('[[*reg_i]]',page_data['reg_i'])
+                            template_html = template_html.replace('[[*reg_r]]',page_data['reg_r'])
+                            template_html = template_html.replace('[[*reg_d]]',page_data['reg_d'])
+                            template_html = template_html.replace('[[*reg_v]]',page_data['reg_v'])
+                            template_html = template_html.replace('[[*reg_t]]',page_data['reg_t'])
+                            template_html = template_html.replace('[[*reg_p]]',page_data['reg_p'])
 
-                            # Заменяем в html коде плейсхолдера падежи
+                            # ШАБЛОН > Заменяем в html коде вызовы параметров страницы
+                            template_html = template_html.replace('[[*domain]]',page_data['domain'])
+                            template_html = template_html.replace('[[*phone]]',page_data['phone'])
+                            template_html = template_html.replace('[[*phone_clean]]',page_data['phone'].replace(' ','').replace('(','').replace(')','').replace('-',''))
+                            template_html = template_html.replace('[[*email]]',page_data['email'])
+                            template_html = template_html.replace('[[*address]]',page_data['address'])
+
+                            # ШАБЛОН > Добавляем список со ссылками на другие филиалы
+                            list_region_links_html = '<div class="row"><div class="col-6 col-md-3"><ul>'
+                            for num, i in enumerate(regions):
+
+                                if (num % 10 == 0) and (num != 0):
+                                    list_region_links_html += '</ul><ul></div><div class="col-6 col-md-3"><ul>'
+
+                                list_region_links_html += '<li><a href="http'
+                                if site.ssl:
+                                    list_region_links_html += 's'
+                                list_region_links_html += '://'
+                                if not i.main_region:
+                                    list_region_links_html += i.alias + '.'
+                                list_region_links_html += site.domain + '" title="Филиал в г. ' + i.title + '">' + i.title + '</a></li>'
+
+                            list_region_links_html += '</ul></div></div>'
+
+                            template_html = template_html.replace('[[*regions_menu]]',list_region_links_html)
+
+                            # ПЛЕЙСХОЛДЕР > Заменяем в html коде падежи
                             placeholder.html = placeholder.html.replace('[[*reg_i]]',page_data['reg_i'])
                             placeholder.html = placeholder.html.replace('[[*reg_r]]',page_data['reg_r'])
                             placeholder.html = placeholder.html.replace('[[*reg_d]]',page_data['reg_d'])
@@ -344,7 +390,7 @@ class Command(BaseCommand):
                             placeholder.html = placeholder.html.replace('[[*reg_t]]',page_data['reg_t'])
                             placeholder.html = placeholder.html.replace('[[*reg_p]]',page_data['reg_p'])
 
-                            # Заменяем в html коде плейсхолдера вызовы параметров страницы
+                            # ПЛЕЙСХОЛДЕР > Заменяем в html коде вызовы параметров страницы
                             placeholder.html = placeholder.html.replace('[[*domain]]',page_data['domain'])
                             placeholder.html = placeholder.html.replace('[[*phone]]',page_data['phone'])
                             placeholder.html = placeholder.html.replace('[[*phone_clean]]',page_data['phone'].replace(' ','').replace('(','').replace(')','').replace('-',''))
@@ -521,6 +567,14 @@ class Command(BaseCommand):
                             # Универсальная переадресация поддоменов в директории
                             htaccess.write('\nRewriteRule ^(.*)$ $1.html')
                             htaccess.write('\nRewriteCond %{HTTP_HOST} ^(.*).' + site.domain + '$\nRewriteRule ^(.*)$ /%1/public_html/$1 [L]')
+                        elif site.hosting == 'regru':
+                            if site.ssl:
+                                protocol = 'https://'
+                            else:
+                                protocol = 'http://'
+                            for region_item in regions:
+                                htaccess.write('\nRedirect 301 /' + region_item.alias + '/ ' + protocol + region_item.alias + '.' + site.domain + '/')
+
                         # Правила обработки поддоменов для каждого региона
                         # for region_item in regions:
                         #     if region_item.main_region:
@@ -570,10 +624,16 @@ class Command(BaseCommand):
                     sitemap.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n')
 		
                     for page in site.page_set.all():
-                        if str(page.alias) != '/':
-                            full_page_path = subdomain_domain + self.get_full_page_dir(page) + '/' + str(page.alias)
+                        if region.main_region:
+                            if str(page.alias) != '/':
+                                full_page_path = subdomain_domain + self.get_full_page_dir(page) + '/' + str(page.alias)
+                            else:
+                                full_page_path = subdomain_domain + '/'
                         else:
-                            full_page_path = subdomain_domain + '/'
+                            if str(page.alias) != '/':
+                                full_page_path = subdomain_domain + '.' + site.domain + self.get_full_page_dir(page) + '/' + str(page.alias)
+                            else:
+                                full_page_path = subdomain_domain + '.' + site.domain + '/'
 
                         sitemap.write('\t<url>\n\t\t<loc>' + full_page_path + '</loc>\n\t\t<lastmod>' + str(today.strftime("%Y-%m-%dT%H:%M:%S")) + '+01:00</lastmod>\n\t\t<priority>' + str(page.sitemap_priority) + '</priority>\n\t</url>\n')
                     
