@@ -120,6 +120,7 @@ class Command(BaseCommand):
             errors_count = 0
 
             # Перебираем регионы
+            
             for region in regions:
                 
                 self.stdout.write('Сборка региона > ' + region.title)
@@ -382,6 +383,34 @@ class Command(BaseCommand):
 
                             template_html = template_html.replace('[[*regions_menu]]',list_region_links_html)
 
+                            # Шаблон > Добавляем список со ссылками на другие филиалы ПО БУКВАМ
+                            
+                            list_region_links_letter_dict = {}
+                            list_region_first_letters = []
+                            for num, i in enumerate(regions):
+                                first_letter = i.title[0]
+                                if not first_letter in list_region_first_letters: 
+                                    list_region_first_letters.append(first_letter)
+                                if not first_letter in list_region_links_letter_dict:
+                                    list_region_links_letter_dict[first_letter] = ''
+                                
+                                list_region_links_html = '<li><a href="http'
+                                if site.ssl:
+                                    list_region_links_html += 's'
+                                list_region_links_html += '://'
+                                if not i.main_region:
+                                    list_region_links_html += i.alias + '.'
+                                list_region_links_html += site.domain + '" title="Филиал в г. ' + i.title + '">' + i.title + '</a></li>'
+                                
+                                list_region_links_letter_dict[first_letter] += list_region_links_html
+
+                            for l in list_region_first_letters:
+                                template_html = template_html.replace('[[*regions_menu_' + l + ']]',list_region_links_letter_dict[l])
+
+                            # Очищаем словарь и список
+                            list_region_links_letter_dict.clear()
+                            list_region_first_letters.clear()
+
                             # ПЛЕЙСХОЛДЕР > Заменяем в html коде падежи
                             placeholder.html = placeholder.html.replace('[[*reg_i]]',page_data['reg_i'])
                             placeholder.html = placeholder.html.replace('[[*reg_r]]',page_data['reg_r'])
@@ -562,12 +591,13 @@ class Command(BaseCommand):
                         htaccess.write('\nRewriteCond %{REQUEST_URI} !(\.[^./]+)$')
                         htaccess.write('\nRewriteCond %{REQUEST_fileNAME} !-d')
                         htaccess.write('\nRewriteCond %{REQUEST_fileNAME} !-f')
-                        htaccess.write('\nRewriteRule (.*) /$1.html [L]')
+                        
                         if site.hosting == 'beget':
                             # Универсальная переадресация поддоменов в директории
                             htaccess.write('\nRewriteRule ^(.*)$ $1.html')
                             htaccess.write('\nRewriteCond %{HTTP_HOST} ^(.*).' + site.domain + '$\nRewriteRule ^(.*)$ /%1/public_html/$1 [L]')
                         elif site.hosting == 'regru':
+                            htaccess.write('\nRewriteRule (.*) /$1.html [L]')
                             if site.ssl:
                                 protocol = 'https://'
                             else:

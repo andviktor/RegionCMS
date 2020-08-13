@@ -7,7 +7,7 @@
                     <div class="form-group">
                         <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                         {% if 'Textarea' in field.field.widget|safe %}
-                            <textarea class="form-control dark-input" name="{{ field.html_name }}" rows="10">{{ field.value }}</textarea>
+                            <textarea class="form-control dark-input" name="{{ field.html_name }}" rows="30">{{ field.value }}</textarea>
                         {% elif 'Select' in field.field.widget|safe %}
                             <select class="form-control dark-input" name="{{ field.html_name }}">
                                 {% for option in field.subwidgets %}
