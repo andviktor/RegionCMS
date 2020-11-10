@@ -41,14 +41,19 @@ class Command(BaseCommand):
                         elif site.hosting == 'regru':
                             stdin, stdout, stderr = client.exec_command('cd www/' + site.domain + '/; rm -rd ./*')
                             stdin, stdout, stderr = client.exec_command('cd www/' + site.domain + '/; rm .htaccess')
+                        elif site.hosting == 'timeweb':
+                            stdin, stdout, stderr = client.exec_command('cd public_html/; rm -r ./*')
+                            stdin, stdout, stderr = client.exec_command('cd public_html/; rm .htaccess')
+                        self.stdout.write('Директория ' + domain_dir + ' очищена.')
                     else:
                         if site.hosting == 'beget':
                             domain_dir = region.alias + '.' + site.domain
                             stdin, stdout, stderr = client.exec_command('rm -rd ' + domain_dir + '/public_html')
+                            self.stdout.write('Директория ' + domain_dir + ' очищена.')
                         elif site.hosting == 'regru':
                             domain_dir = region.alias
                             stdin, stdout, stderr = client.exec_command('cd www/' + site.domain + '/; rm -rd ./' + domain_dir)
-                    self.stdout.write('Директория ' + domain_dir + ' очищена.')
+                            self.stdout.write('Директория ' + domain_dir + ' очищена.')
                 except:
                     self.stdout.write('Ошибка очистки директории ' + site.domain)
 
@@ -80,7 +85,10 @@ class Command(BaseCommand):
             try:
                 path = os.getcwd()
                 path = path + '/build/' + site.title + '/' + site.build + '/' + site.build + '.zip'
-                ftp.storbinary('STOR ' + site.build + '.zip', open(path, 'rb'))
+                if site.hosting == 'timeweb':
+                    ftp.storbinary('STOR public_html/' + site.build + '.zip', open(path, 'rb'))
+                else:
+                    ftp.storbinary('STOR ' + site.build + '.zip', open(path, 'rb'))
                 ftp.quit()
                 self.stdout.write('Архив успешно загружен на сервер.')
             except:
@@ -93,6 +101,8 @@ class Command(BaseCommand):
                     stdin, stdout, stderr = client.exec_command('unzip -o ' + site.build + '.zip')
                 elif site.hosting == 'regru':
                     stdin, stdout, stderr = client.exec_command('cd www/' + site.domain + '/; unzip ' + site.build + '.zip')
+                elif site.hosting == 'timeweb':
+                    stdin, stdout, stderr = client.exec_command('cd public_html/; unzip ' + site.build + '.zip')
             except:
                 self.stdout.write('Ошибка распаковки архива сборки на сервере!')
 
@@ -111,6 +121,8 @@ class Command(BaseCommand):
                     stdin, stdout, stderr = client.exec_command('rm ' + site.build + '.zip')
                 elif site.hosting == 'regru':
                     stdin, stdout, stderr = client.exec_command('cd www/' + site.domain + '/; rm ' + site.build + '.zip')
+                elif site.hosting == 'timeweb':
+                    stdin, stdout, stderr = client.exec_command('rm public_html/' + site.build + '.zip')
                 self.stdout.write('Файл архива сборки успешно удален.')
             except:
                 self.stdout.write('Ошибка удаления архива сборки!')

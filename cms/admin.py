@@ -39,7 +39,7 @@ admin.site.register(Page, PageAdmin)
 
 # Плейсхолдеры
 class PlaceholderAdmin(admin.ModelAdmin):
-    readonly_fields = ('uniqcodes','uniqwords',)
+    #readonly_fields = ('uniqcodes','uniqwords',)
     list_display = ('__str__', 'page')
     list_filter = ('page__site__title','page__title',)
 

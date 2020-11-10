@@ -447,7 +447,6 @@ class Command(BaseCommand):
                             else:
                                 regionhook_output = regionhook_dict['else']
                             template_html = template_html.replace(regionhook_search.group(0),regionhook_output)
-                            break
                         except:
                             break
 
@@ -468,7 +467,8 @@ class Command(BaseCommand):
                             new_dir = path + site.title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/' + region.alias + '/public_html' + full_page_dir
                         elif site.hosting == 'regru':
                             new_dir = path + site.title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/' + region.alias + full_page_dir
-                    
+                        elif site.hosting == 'timeweb':
+                            new_dir = path + site.title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/' + region.alias + full_page_dir
                     try:
                         os.makedirs(new_dir, exist_ok=True)
                     except OSError as exc:
@@ -501,6 +501,8 @@ class Command(BaseCommand):
                             subdomain_path = path + '/build/' + site_title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/' + region.alias + '/public_html/'
                         elif site.hosting == 'regru':
                             subdomain_path = path + '/build/' + site_title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/' + region.alias + '/'
+                        elif site.hosting == 'timeweb':
+                            subdomain_path = path + '/build/' + site_title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/' + region.alias + '/'
                     shutil.copytree(assets_path, subdomain_path+'assets/')
                 except:
                     errors_count += 1
@@ -515,6 +517,8 @@ class Command(BaseCommand):
                         if site.hosting == 'beget':
                             subdomain_path = path + '/build/' + site_title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/' + region.alias + '/public_html/'
                         elif site.hosting == 'regru':
+                            subdomain_path = path + '/build/' + site_title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/' + region.alias + '/'
+                        elif site.hosting == 'timeweb':
                             subdomain_path = path + '/build/' + site_title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/' + region.alias + '/'
                     shutil.copyfile(subdomain_path + site.favicon, subdomain_path + 'favicon.ico')
                 except:
@@ -555,6 +559,8 @@ class Command(BaseCommand):
                             subdomain_path = path + '/build/' + site_title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/' + region.alias + '/public_html/'
                         elif site.hosting == 'regru':
                             subdomain_path = path + '/build/' + site_title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/' + region.alias + '/'
+                        elif site.hosting == 'timeweb':
+                            subdomain_path = path + '/build/' + site_title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/' + region.alias + '/'
                     robots = open(subdomain_path + 'robots.txt', 'w')
                     robots.write(site.robots)
 
@@ -584,13 +590,14 @@ class Command(BaseCommand):
                     
                     if region.main_region:
                         htaccess.write('RewriteEngine On')
-                        # Убираем .html
                         htaccess.write('\nRewriteBase /')
-                        htaccess.write('\nRewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /([^.]+)\.html\ HTTP')
-                        htaccess.write('\nRewriteRule ^([^.]+)\.html$ https://' + site.domain + '/$1 [R=301,L]')
-                        htaccess.write('\nRewriteCond %{REQUEST_URI} !(\.[^./]+)$')
-                        htaccess.write('\nRewriteCond %{REQUEST_fileNAME} !-d')
-                        htaccess.write('\nRewriteCond %{REQUEST_fileNAME} !-f')
+                        # Убираем .html
+                        if site.hosting == 'beget' or site.hosting == 'regru':
+                            htaccess.write('\nRewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /([^.]+)\.html\ HTTP')
+                            htaccess.write('\nRewriteRule ^([^.]+)\.html$ https://' + site.domain + '/$1 [R=301,L]')
+                            htaccess.write('\nRewriteCond %{REQUEST_URI} !(\.[^./]+)$')
+                            htaccess.write('\nRewriteCond %{REQUEST_fileNAME} !-d')
+                            htaccess.write('\nRewriteCond %{REQUEST_fileNAME} !-f')
                         
                         if site.hosting == 'beget':
                             # Универсальная переадресация поддоменов в директории
@@ -604,6 +611,9 @@ class Command(BaseCommand):
                                 protocol = 'http://'
                             for region_item in regions:
                                 htaccess.write('\nRedirect 301 /' + region_item.alias + '/ ' + protocol + region_item.alias + '.' + site.domain + '/')
+                        elif site.hosting == 'timeweb':
+                            htaccess.write('\nRewriteCond %{HTTP_HOST} ^(.*).' + site.domain + '$ [NC]')
+                            htaccess.write('\nRewriteRule ^(.*)$ /%1/$1 [L,QSA]')
 
                         # Правила обработки поддоменов для каждого региона
                         # for region_item in regions:
@@ -624,7 +634,12 @@ class Command(BaseCommand):
                             htaccess.write('\nRewriteCond %{REQUEST_fileNAME} !-d')
                             htaccess.write('\nRewriteCond %{REQUEST_fileNAME} !-f')
                             htaccess.write('\nRewriteRule (.*) /$1.html [L]')
-                            
+                        # if site.hosting == 'timeweb':
+                            # Правила для поддоменов
+                            # htaccess.write('\nRewriteBase /')
+                            # htaccess.write('\nRewriteCond %{REQUEST_URI} !^/' + region.alias)
+                            # htaccess.write('\nRewriteCond %{HTTP_HOST} ^' + region.alias + '.' + site.domain + '$ [NC]')
+                            # htaccess.write('\nRewriteRule ^index\.php(.*)$ /' + region.alias + '/$1 [L,QSA]')
                     htaccess.close()
                 except:
                     errors_count += 1
@@ -646,6 +661,9 @@ class Command(BaseCommand):
                             subdomain_path = path + '/build/' + site_title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/' + region.alias + '/public_html/'
                             subdomain_domain = protocol + region.alias + '.' + site.domain
                         elif site.hosting == 'regru':
+                            subdomain_path = path + '/build/' + site_title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/' + region.alias + '/'
+                            subdomain_domain = protocol + region.alias
+                        elif site.hosting == 'timeweb':
                             subdomain_path = path + '/build/' + site_title + '/' + str(today.strftime("%Y-%m-%d-%H-%M-%S")) + '/' + region.alias + '/'
                             subdomain_domain = protocol + region.alias
 
