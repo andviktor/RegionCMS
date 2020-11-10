@@ -1,0 +1,19 @@
+{% extends "base_generic.html" %}
+
+{% block title %}Регионы{% endblock %}
+{% block header %}Регионы{% endblock %}
+
+{% block content %}
+    {% if region_list %}
+        
+        {% for region in region_list %}
+        <a href="{% url 'region-edit' region.pk %}">
+            <span class="badge badge-light">{{ region.title }}</span>
+        </a>
+        {% endfor %}
+        <hr />
+        {% with region_list|first as region %}
+        <a href="{% url 'region-create' region.site.pk %}" class="btn btn-success"><span class="glyphicon glyphicon-plus"></span>Добавить регион</a>
+        {% endwith %}
+    {% endif %}
+{% endblock %}

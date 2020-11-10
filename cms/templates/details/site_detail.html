@@ -51,19 +51,9 @@
             <!-- Конец блока Настройки -->
             <!-- Регионы -->
             <div class="card border-warning text-white bg-secondary mb-3">
-                <div class="card-header"><h5 class="mb-0">Регионы</h5></div>
-                <div class="card-body px-0 py-0">
-                    <div class="list-group">
-                        {% for region in site.region_set.all|dictsort:"title" %}
-                        <a href="{% url 'region-edit' region.pk %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                            {{ region.title }}
-                            <span class="badge badge-warning">{{ region.alias }}.{{ site.domain }}</span>
-                        </a>
-                        {% endfor %}
-                    </div>
-                </div>
+                <div class="card-header"><h5 class="mb-0">Регионы ({{ site.region_set.all|length }})</h5></div>
                 <div class="card-footer text-muted">
-                    <a href="{% url 'region-create' site.pk %}" class="btn btn-outline-warning btn-sm">Добавить регион</a>
+                    <a href="{% url 'region-list' site.pk %}" class="btn btn-outline-warning btn-sm">Редактировать</a>
                 </div>
             </div>
             <!-- Конец блока Регионы -->

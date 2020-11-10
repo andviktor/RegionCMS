@@ -53,20 +53,36 @@ class RegionCreate(generic.CreateView):
          form.instance.site = site
          return super(RegionCreate, self).form_valid(form)
     def get_success_url(self):
-        return reverse('site-detail', kwargs={'pk': self.object.site.pk})
+        return reverse('region-list', kwargs={'site_id': self.object.site.pk})
+
+class RegionListView(generic.ListView):
+    model = Region
+    context_object_name = 'region_list'
+    
+    template_name = 'lists/region_list.html'
+
+    def get_queryset(self):
+        return Region.objects.filter(
+            site=self.kwargs['site_id']
+        ).order_by(
+            'title'
+        )
+    
+    def get_site_id(self):
+        return self.kwargs['site_id']
 
 class RegionUpdate(generic.UpdateView):
     model = Region
     fields = ['title', 'main_region', 'padeji', 'alias', 'phone', 'email', 'address']
     template_name = 'forms/region_form.html'
     def get_success_url(self):
-        return reverse('site-detail', kwargs={'pk': self.object.site.pk})
+        return reverse('region-list', kwargs={'site_id': self.object.site.pk})
 
 class RegionDelete(generic.DeleteView):
     model = Region
     template_name = 'forms/region_confirm_delete.html'
     def get_success_url(self):
-        return reverse('site-detail', kwargs={'pk': self.object.site.pk})
+        return reverse('region-list', kwargs={'site_id': self.object.site.pk})
 
 # template
 class TemplateCreate(generic.CreateView):

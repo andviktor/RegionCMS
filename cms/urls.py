@@ -26,6 +26,7 @@ urlpatterns += [
 
 # region
 urlpatterns += [
+    path('site/<int:site_id>/regions', views.RegionListView.as_view(), name='region-list'),
     path('region/<int:pk>/edit', views.RegionUpdate.as_view(), name='region-edit'),
     path('site/<int:site_id>/addregion', views.RegionCreate.as_view(), name='region-create'),
     path('region/<int:pk>/delete', views.RegionDelete.as_view(), name='region-delete'),
