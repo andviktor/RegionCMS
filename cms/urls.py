@@ -59,3 +59,11 @@ urlpatterns += [
     path('site/<int:site_id>/addpage', views.PageCreate.as_view(), name='page-create'),
     path('page/<int:pk>/delete', views.PageDelete.as_view(), name='page-delete'),
 ]
+
+# service
+urlpatterns += [
+    path('service/topvisor/<int:pk>/edit', views.TopvisorUpdate.as_view(), name='topvisor-edit'),
+    path('site/<int:site_id>/createtopvisor', views.create_topvisor, name='create-topvisor'),
+    path('service/topvisor/<int:topvisor_id>/export', views.export_topvisor, name='export-topvisor'),
+    path('service/topvisor/<int:topvisor_id>/clear', views.clear_topvisor, name='clear-topvisor'),
+]

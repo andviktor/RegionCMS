@@ -83,3 +83,16 @@ class Placeholder(models.Model):
         return self.page.site.title + " / " + self.page.title + " / " + self.title
     class Meta:
         verbose_name_plural = "Плейсхолдеры"
+
+class Topvisor(models.Model):
+    site = models.ForeignKey(Site, on_delete=models.CASCADE, verbose_name="Сайт")
+    userid = models.CharField(max_length=10, default="", verbose_name="ID пользователя")
+    apikey = models.CharField(max_length=50, default="", verbose_name="API Ключ")
+    keywords = models.TextField(default="", verbose_name="Ключевые фразы (без регионов)")
+    scheduleday = models.CharField(max_length=10, default="", verbose_name="День проверки", help_text="ALL - каждый день; YANDEX_UPDATE - после апдейтов Яндекса; AFTER_CHECK - после проверки; MONDAY - понедельник; TUESDAY - вторник; WEDNESDAY - среда; THURSDAY - четверг; FRIDAY - пятница; SATURDAY - суббота; SUNDAY - воскресенье; 0..27 - день месяца (число от 1 до 27); LAST_OF_MONTH - последний день месяца")
+    schedulehour = models.CharField(max_length=50, default="", verbose_name="Час проверки", help_text="1-24")
+
+    def __str__(self):
+        return "Топвизор"
+    class Meta:
+        verbose_name_plural = "Топвизор"

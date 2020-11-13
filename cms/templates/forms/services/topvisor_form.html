@@ -1,0 +1,25 @@
+{% extends "base_generic.html" %}
+
+{% block title %}Топвизор{% endblock %}
+{% block header %}Топвизор{% endblock %}
+
+{% block breadcrumbs %}
+    {% if chunk %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/cms/">Сайты</a></li>
+        <li class="breadcrumb-item"><a href="/cms/site/{{ topvisor.site.pk }}">{{ topvisor.site.title }}</a></li>
+        <li class="breadcrumb-item active">Топвизор</li>
+    </ol>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    {% include "forms/common_form.html" %}
+    {% if topvisor %}
+    <hr />
+    <div class="text-right">
+        <a href="{% url 'clear-topvisor' topvisor.pk %}" class="btn btn-warning disabled" disabled="disabled">Удалить все</a>
+        <a href="{% url 'export-topvisor' topvisor.pk %}" class="btn btn-info">Экспорт</a>
+    </div>
+    {% endif %}
+{% endblock %}

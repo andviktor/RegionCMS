@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Site, Region, Template, Chunk, Page, Placeholder
+from .models import Topvisor, Site, Region, Template, Chunk, Page, Placeholder
 
 # Сайты
 class SiteAdmin(admin.ModelAdmin):
@@ -44,3 +44,9 @@ class PlaceholderAdmin(admin.ModelAdmin):
     list_filter = ('page__site__title','page__title',)
 
 admin.site.register(Placeholder, PlaceholderAdmin)
+
+# Топвизоры (настройки для сайтов)
+class TopvisorAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'site', 'userid', 'apikey', 'keywords', 'scheduleday', 'schedulehour')
+
+admin.site.register(Topvisor, TopvisorAdmin)

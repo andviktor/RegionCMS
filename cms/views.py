@@ -1,10 +1,12 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
-from .models import Site, Region, Template, Chunk, Page, Placeholder
+from .models import Topvisor, Site, Region, Template, Chunk, Page, Placeholder
 from django.views import generic
 from django.urls import reverse_lazy, reverse
 from django.core import management
 from io import StringIO
+from requests import post
+import json
 
 # build
 def build_site(request, site_id):
@@ -183,3 +185,163 @@ class PlaceholderDelete(generic.DeleteView):
     template_name = 'forms/placeholder_confirm_delete.html'
     def get_success_url(self):
         return reverse('page-edit', kwargs={'pk': self.object.page.pk})
+
+# services
+def create_topvisor(request, site_id):
+    try:
+        site = Site.objects.get(pk=site_id)
+        topvisor = Topvisor(site=site)
+        topvisor.save()
+        site.log = "Топвизор подключен."
+    except:
+        site = Site.objects.get(pk=site_id)
+        site.log = "Ошибка при создании Топвизора."
+    site.save(update_fields=['log'])
+    return redirect('site-detail', pk=site.pk)
+
+def export_topvisor(request, topvisor_id):
+    topvisor = Topvisor.objects.get(pk=topvisor_id)
+    site = Site.objects.get(pk=topvisor.site.pk)
+    regions = list(Region.objects.filter(site=site).order_by('-title'))
+    log = ''
+    region_log ='Назначение регионов:\n'
+    header_apikey = 'bearer '+topvisor.apikey
+    create_project_request_headers = {
+        'Content-type':'application/json',
+        'User-Id':topvisor.userid,
+        'Authorization':header_apikey
+    }
+    for region in regions:
+        try:
+            region_site_link = 'http'
+            if site.ssl:
+                region_site_link += 's'
+            region_site_link += '://'
+            if not region.main_region:
+                region_site_link += region.alias + '.'
+            region_site_link += site.domain
+            
+            create_project_request_data = {
+                'url':region_site_link,
+                'name':region.title
+            }
+            create_project_request = post('https://api.topvisor.com/v2/json/add/projects_2/projects', headers=create_project_request_headers, data = json.dumps(create_project_request_data))
+
+            log += 'Проект для г. ' + region.title + ' создан\n'
+        except:
+            log += '(!) Ошибка проекта для г. ' + region.title + '\n'
+
+    try:        
+        get_projects_request_data = {
+            'fields':['name']
+        }
+        get_projects_request = post('https://api.topvisor.com/v2/json/get/projects_2/projects', headers=create_project_request_headers, data= json.dumps(get_projects_request_data))
+        get_projects_request_json = get_projects_request.json()
+        for project in get_projects_request_json['result']:
+
+            # Получаем данные региона
+            get_region_data_request_data = {
+                'searcher':0,
+                'search':project['name'],
+                'limit':1
+            }
+            get_region_data_request = post('https://api.topvisor.com/v2/json/get/mod_common/regions', headers=create_project_request_headers, data = json.dumps(get_region_data_request_data))
+            get_region_data_request_result = get_region_data_request.json()
+
+            # Яндекс
+            add_searcher_request_data = {
+                'project_id':project['id'],
+                'searcher_key':0
+            }
+            add_searcher_request = post('https://api.topvisor.com/v2/json/add/positions_2/searchers', headers=create_project_request_headers, data = json.dumps(add_searcher_request_data))
+            
+            # Google            
+            add_searcher_request_data = {
+                'project_id':project['id'],
+                'searcher_key':1
+            }
+            add_searcher_request = post('https://api.topvisor.com/v2/json/add/positions_2/searchers', headers=create_project_request_headers, data = json.dumps(add_searcher_request_data))
+
+            # Добавляем регионы
+            for set_region in get_region_data_request_result['result']:
+                add_region_data_request_data = {
+                    'project_id':project['id'],
+                    'searcher_key':0,
+                    'region_key':set_region['id']
+                }
+                add_region_data_request = post('https://api.topvisor.com/v2/json/add/positions_2/searchers_regions', headers=create_project_request_headers, data = json.dumps(add_region_data_request_data))
+                add_region_data_request_data = {
+                    'project_id':project['id'],
+                    'searcher_key':1,
+                    'region_key':set_region['id']
+                }
+                add_region_data_request = post('https://api.topvisor.com/v2/json/add/positions_2/searchers_regions', headers=create_project_request_headers, data = json.dumps(add_region_data_request_data))
+                region_log += project['name']+' : '+set_region['name']+'\n'
+
+            # Добавляем фразы
+            keywords = topvisor.keywords.replace('\r',' ')
+            region_keywords = ''
+            for keyword in keywords.split('\n'):
+                region_keywords += '\n'+keyword+' '+project['name']
+            add_keywords_data_request_data = {
+                'project_id':project['id'],
+                'keywords':'name\n'+keywords+region_keywords
+            }
+            add_keywords_data_request = post('https://api.topvisor.com/v2/json/add/keywords_2/keywords/import', headers=create_project_request_headers, data = json.dumps(add_keywords_data_request_data))
+            
+            # Добавляем расписание
+            add_schedule_data_request_data = {
+                'type':'positions_go',
+                'target_id':project['id'],
+                'schedule':[{
+                    'times':[{
+                        'hour':topvisor.schedulehour,
+                        'minute':0
+                    }],
+                    'days':[topvisor.scheduleday]
+                }]
+            }
+            add_schedule_data_request = post('https://api.topvisor.com/v2/json/edit/schedule_2', headers=create_project_request_headers, data = json.dumps(add_schedule_data_request_data))
+            
+
+    except:
+        log += '(!) Ошибка получения списка проектов.'
+
+
+    site.log = log + '\n----------\n' + region_log
+    site.save(update_fields=['log'])
+    return redirect('site-detail', pk=topvisor.site.pk)
+
+def clear_topvisor(request, topvisor_id):
+    topvisor = Topvisor.objects.get(pk=topvisor_id)
+    site = Site.objects.get(pk=topvisor.site.pk)
+    try:        
+        header_apikey = 'bearer '+topvisor.apikey
+        create_project_request_headers = {
+            'Content-type':'application/json',
+            'User-Id':topvisor.userid,
+            'Authorization':header_apikey
+        }
+        create_project_request_data = {
+            "filters":[{
+                "name":"name",
+                "operator":"NOT_EQUALS",
+                "values": [""]
+            },]
+        }
+        create_project_request = post('https://api.topvisor.com/v2/json/del/projects_2/projects', headers=create_project_request_headers, data = json.dumps(create_project_request_data))
+
+        site.log = "Все проекты Топвизор успешно удалены."
+        
+    except:
+        site.log = "Ошибка при удалении проектов Топвизор."
+
+    site.save(update_fields=['log'])
+    return redirect('site-detail', pk=topvisor.site.pk)
+
+class TopvisorUpdate(generic.UpdateView):
+    model = Topvisor
+    fields = ['userid', 'apikey', 'keywords', 'scheduleday', 'schedulehour']
+    template_name = 'forms/services/topvisor_form.html'
+    def get_success_url(self):
+        return reverse('topvisor-edit', kwargs={'pk': self.object.pk})
