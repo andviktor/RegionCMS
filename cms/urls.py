@@ -67,3 +67,8 @@ urlpatterns += [
     path('service/topvisor/<int:topvisor_id>/export', views.export_topvisor, name='export-topvisor'),
     path('service/topvisor/<int:topvisor_id>/clear', views.clear_topvisor, name='clear-topvisor'),
 ]
+
+# analytics
+urlpatterns += [
+    path('analytics/topvisor/<int:topvisor_id>', views.AnalyticsTopvisorPositions, name='analytics-topvisor-positions')
+]

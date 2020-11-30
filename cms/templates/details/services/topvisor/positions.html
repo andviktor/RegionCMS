@@ -1,0 +1,20 @@
+{% extends "base_generic.html" %}
+
+{% load app_filters %}
+
+{% block title %}Позиции сайта «{{ topvisor.site.title }}»{% endblock %}
+{% block header %}Позиции сайта «{{ topvisor.site.title }}»{% endblock %}
+
+{% block breadcrumbs %}
+<ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/cms/">Сайты</a></li>
+    <li class="breadcrumb-item"><a href="/cms/site/{{ topvisor.site.pk }}">{{ topvisor.site.title }}</a></li>
+    <li class="breadcrumb-item active">Позиции сайта (Топвизор)</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+
+<p>{{ positions|safe }}</p>
+
+{% endblock %}

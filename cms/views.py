@@ -296,7 +296,7 @@ def export_topvisor(request, topvisor_id):
                 'schedule':[{
                     'times':[{
                         'hour':topvisor.schedulehour,
-                        'minute':0
+                        'minute':15
                     }],
                     'days':[topvisor.scheduleday]
                 }]
@@ -345,3 +345,55 @@ class TopvisorUpdate(generic.UpdateView):
     template_name = 'forms/services/topvisor_form.html'
     def get_success_url(self):
         return reverse('topvisor-edit', kwargs={'pk': self.object.pk})
+
+
+# Analytics
+
+def AnalyticsTopvisorPositions(request, topvisor_id):
+    topvisor = Topvisor.objects.get(pk=topvisor_id)
+    template = 'details/services/topvisor/positions.html'
+
+    def get_positions(topvisor):
+        result_html = ''
+        result_html += '<table class=""><tr><td>Регион</td><td>Инфа</td></tr>'
+        header_apikey = 'bearer '+topvisor.apikey
+        get_positions_request_headers = {
+            'Content-type':'application/json',
+            'User-Id':topvisor.userid,
+            'Authorization':header_apikey
+        }
+        get_projects_request_data = {
+            'fields':['name'],
+            'show_site_stat':1,
+            'show_searchers_and_regions':1
+        }
+        get_projects_request = post('https://api.topvisor.com/v2/json/get/projects_2/projects', headers=get_positions_request_headers, data= json.dumps(get_projects_request_data))
+        get_projects_request_json = get_projects_request.json()
+        for project in get_projects_request_json['result']:
+            result_html += '<tr><td>'+project['name']+'</td>'
+            for searcher in project['searchers']:
+                if searcher['regions'][0]['name'] == project['name']:
+                    region_key = searcher['regions'][0]['key']
+                    break
+            get_positions_request_data = {
+                'project_id':project['id'],
+                'region_index':region_key,
+                'dates':['2020-11-13','2020-11-14'],
+                'show_tops':1
+            }
+            get_positions_data_request = post('https://api.topvisor.com/v2/json/get/positions_2/summary', headers=get_positions_request_headers, data = json.dumps(get_positions_request_data))
+            get_positions_data_request_result = get_positions_data_request.json()
+            print(region_key)
+            print(get_positions_data_request_result)
+            break
+            result_html += '</tr>'
+
+        result_html += '</table>'
+        return result_html
+
+    context = {
+        "topvisor" : topvisor,
+        "positions" : get_positions(topvisor)
+    }
+    
+    return render(request, template, context)

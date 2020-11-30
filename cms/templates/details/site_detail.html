@@ -71,6 +71,28 @@
                 </div>
             </div>
             <!-- Конец блока Сервисы -->
+            <!-- Аналитика -->
+            <div class="card border-light text-white bg-secondary mb-3">
+                <div class="card-header"><h5 class="mb-0">Аналитика</h5></div>
+                <div class="card-body px-0 py-0">
+                    <div class="list-group">
+                        {% if site.topvisor_set.count == 0 %}
+                            <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center disabled" disabled="disabled">
+                                Позиции в поиске (Топвизор)
+                                <span class="badge badge-light">не активен</span>
+                            </a>
+                        {% else %}
+                            {% for topvisor in site.topvisor_set.all %}
+                            <a href="{% url 'analytics-topvisor-positions' topvisor.pk %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                Позиции в поиске (Топвизор)
+                                <span class="badge badge-success">активен</span>
+                            </a>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <!-- Конец блока Аналитика -->
             <!-- Регионы -->
             <div class="card border-warning text-white bg-secondary mb-3">
                 <div class="card-header"><h5 class="mb-0">Регионы ({{ site.region_set.all|length }})</h5></div>

@@ -450,13 +450,33 @@ class Command(BaseCommand):
                         except:
                             break
 
-                    # РЕЗУЛЬТАТ
-                    # На данном этапе получен полностью скомпилированный код страницы
-                    # self.stdout.write(site.title + '(' + region.title + '): ' + page.title + ' > код сформирован')
-
                     # Формируем полный адрес страницы с учетом вложенности
                     full_page_dir = self.get_full_page_dir(page)
 
+                    # Заменяем relcanonical на тег
+                    relcanonical = '<link rel="canonical" href="http'
+                    if site.ssl:
+                        relcanonical += 's'
+                    relcanonical += '://'
+                    if not region.main_region:
+                        relcanonical += region.alias + '.'
+                    relcanonical += site.domain
+
+                    if page.parent:
+                        if full_page_dir != '':
+                            relcanonical += full_page_dir + '/'
+                        else:
+                            relcanonical += '/'
+                        relcanonical += page.alias
+                        if site.hosting == 'timeweb':
+                            relcanonical += '.html'
+                    relcanonical += '"/>'
+                    template_html = template_html.replace('[[*relcanonical]]',relcanonical)
+
+                    # РЕЗУЛЬТАТ
+                    # На данном этапе получен полностью скомпилированный код страницы
+                    # self.stdout.write(site.title + '(' + region.title + '): ' + page.title + ' > код сформирован')
+                    
                     # Создаем временную папку в соответствии с адресом страницы
                     path = os.getcwd()
                     path = path + '/build/'
@@ -480,7 +500,7 @@ class Command(BaseCommand):
                         full_page_path = new_dir + '/' + str(page.alias) + '.html'
                     else:
                         full_page_path = new_dir + '/index.html'
-                    
+                        
                     try:
                         f = open(full_page_path, 'w')
                         f.write(template_html)

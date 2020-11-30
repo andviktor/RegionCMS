@@ -18,7 +18,7 @@
     {% if topvisor %}
     <hr />
     <div class="text-right">
-        <a href="{% url 'clear-topvisor' topvisor.pk %}" class="btn btn-warning disabled" disabled="disabled">Удалить все</a>
+        <a href="{% url 'clear-topvisor' topvisor.pk %}" class="btn btn-warning">Удалить все</a>
         <a href="{% url 'export-topvisor' topvisor.pk %}" class="btn btn-info">Экспорт</a>
     </div>
     {% endif %}
