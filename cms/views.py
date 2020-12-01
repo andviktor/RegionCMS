@@ -7,6 +7,7 @@ from django.core import management
 from io import StringIO
 from requests import post
 import json
+import datetime
 
 # build
 def build_site(request, site_id):
@@ -355,7 +356,8 @@ def AnalyticsTopvisorPositions(request, topvisor_id):
 
     def get_positions(topvisor):
         result_html = ''
-        result_html += '<table class=""><tr><td>Регион</td><td>Инфа</td></tr>'
+        result_html += '<table class="table table-hover"><tr><td rowspan="1">Регион</td><td colspan="5">Яндекс</td><td></td><td colspan="5">Google</td></tr>'
+        result_html += '<tr><td rowspan="1"></td><td>1-3</td><td>1-10</td><td>11-30</td><td>31-100</td><td>100+</td><td></td><td>1-3</td><td>1-10</td><td>11-30</td><td>31-100</td><td>100+</td></tr>'
         header_apikey = 'bearer '+topvisor.apikey
         get_positions_request_headers = {
             'Content-type':'application/json',
@@ -369,23 +371,85 @@ def AnalyticsTopvisorPositions(request, topvisor_id):
         }
         get_projects_request = post('https://api.topvisor.com/v2/json/get/projects_2/projects', headers=get_positions_request_headers, data= json.dumps(get_projects_request_data))
         get_projects_request_json = get_projects_request.json()
+        
+        today = datetime.date.today()
+        monthago = str(today - datetime.timedelta(weeks=4))
+        today = str(today)
+
         for project in get_projects_request_json['result']:
+            # if project['name'] != 'Саранск':
+            #     continue
+            print(project['name'])
             result_html += '<tr><td>'+project['name']+'</td>'
             for searcher in project['searchers']:
-                if searcher['regions'][0]['name'] == project['name']:
-                    region_key = searcher['regions'][0]['key']
-                    break
+                if searcher['regions'][0]['name'] == project['name'] and searcher['searcher'] == 0:
+                    yandex_region_key = searcher['regions'][0]['index']
+                if searcher['regions'][0]['name'] == project['name'] and searcher['searcher'] == 1:
+                    google_region_key = searcher['regions'][0]['index']
+            # yandex
             get_positions_request_data = {
                 'project_id':project['id'],
-                'region_index':region_key,
-                'dates':['2020-11-13','2020-11-14'],
+                'region_index':yandex_region_key,
+                'dates':[today,monthago],
                 'show_tops':1
             }
             get_positions_data_request = post('https://api.topvisor.com/v2/json/get/positions_2/summary', headers=get_positions_request_headers, data = json.dumps(get_positions_request_data))
             get_positions_data_request_result = get_positions_data_request.json()
-            print(region_key)
-            print(get_positions_data_request_result)
-            break
+            
+            phrases_total = get_positions_data_request_result['result']['tops'][1]['1_10']+get_positions_data_request_result['result']['tops'][1]['11_30']+get_positions_data_request_result['result']['tops'][1]['31_50']+get_positions_data_request_result['result']['tops'][1]['51_100']+get_positions_data_request_result['result']['tops'][1]['101_10000']
+            
+            dynamics = {}
+            
+            dynamics['1_3'] = ' ('+str(get_positions_data_request_result['result']['tops_dynamics']['1_3'])+')' if get_positions_data_request_result['result']['tops_dynamics']['1_3'] != 0 else ''
+            dynamics['1_10'] = ' ('+str(get_positions_data_request_result['result']['tops_dynamics']['1_10'])+')' if get_positions_data_request_result['result']['tops_dynamics']['1_10'] != 0 else ''
+            dynamics['11_30'] = ' ('+str(get_positions_data_request_result['result']['tops_dynamics']['11_30'])+')' if get_positions_data_request_result['result']['tops_dynamics']['11_30'] != 0 else ''
+            dynamics['31_100'] = ' ('+str(get_positions_data_request_result['result']['tops_dynamics']['31_50']+get_positions_data_request_result['result']['tops_dynamics']['51_100'])+')' if (get_positions_data_request_result['result']['tops_dynamics']['31_50']+get_positions_data_request_result['result']['tops_dynamics']['51_100']) != 0 else ''
+            dynamics['101_10000'] = ' ('+str(get_positions_data_request_result['result']['tops_dynamics']['101_10000'])+')' if get_positions_data_request_result['result']['tops_dynamics']['101_10000'] != 0 else ''
+
+            td_color_opacity_1_3 = get_positions_data_request_result['result']['tops'][1]['1_3']/phrases_total
+            td_color_opacity_1_10 = get_positions_data_request_result['result']['tops'][1]['1_10']/phrases_total
+            td_color_opacity_11_30 = get_positions_data_request_result['result']['tops'][1]['11_30']/phrases_total
+            td_color_opacity_31_100 = (get_positions_data_request_result['result']['tops'][1]['31_50']+get_positions_data_request_result['result']['tops'][1]['51_100'])/phrases_total
+            td_color_opacity_101_10000 = get_positions_data_request_result['result']['tops'][1]['101_10000']/phrases_total
+
+            result_html += '<td style="background-color: rgba(0,255,0,'+str(td_color_opacity_1_3)+')">'+str(get_positions_data_request_result['result']['tops'][1]['1_3'])+dynamics['1_3']+'</td>'
+            result_html += '<td style="background-color: rgba(0,255,0,'+str(td_color_opacity_1_10)+')">'+str(get_positions_data_request_result['result']['tops'][1]['1_10'])+dynamics['1_10']+'</td>'
+            result_html += '<td style="background-color: rgba(0,255,0,'+str(td_color_opacity_11_30)+')">'+str(get_positions_data_request_result['result']['tops'][1]['11_30'])+dynamics['11_30']+'</td>'
+            result_html += '<td style="background-color: rgba(0,255,0,'+str(td_color_opacity_31_100)+')">'+str(get_positions_data_request_result['result']['tops'][1]['31_50']+get_positions_data_request_result['result']['tops'][1]['51_100'])+dynamics['31_100']+'</td>'
+            result_html += '<td style="background-color: rgba(255,0,0,'+str(td_color_opacity_101_10000)+')">'+str(get_positions_data_request_result['result']['tops'][1]['101_10000'])+dynamics['101_10000']+'</td><td></td>'
+            
+            # google
+            get_positions_request_data = {
+                'project_id':project['id'],
+                'region_index':google_region_key,
+                'dates':[today,monthago],
+                'show_tops':1
+            }
+            get_positions_data_request = post('https://api.topvisor.com/v2/json/get/positions_2/summary', headers=get_positions_request_headers, data = json.dumps(get_positions_request_data))
+            get_positions_data_request_result = get_positions_data_request.json()
+
+            dynamics['1_3'] = ' ('+str(get_positions_data_request_result['result']['tops_dynamics']['1_3'])+')' if get_positions_data_request_result['result']['tops_dynamics']['1_3'] != 0 else ''
+            dynamics['1_10'] = ' ('+str(get_positions_data_request_result['result']['tops_dynamics']['1_10'])+')' if get_positions_data_request_result['result']['tops_dynamics']['1_10'] != 0 else ''
+            dynamics['11_30'] = ' ('+str(get_positions_data_request_result['result']['tops_dynamics']['11_30'])+')' if get_positions_data_request_result['result']['tops_dynamics']['11_30'] != 0 else ''
+            dynamics['31_100'] = ' ('+str(get_positions_data_request_result['result']['tops_dynamics']['31_50']+get_positions_data_request_result['result']['tops_dynamics']['51_100'])+')' if (get_positions_data_request_result['result']['tops_dynamics']['31_50']+get_positions_data_request_result['result']['tops_dynamics']['51_100']) != 0 else ''
+            dynamics['101_10000'] = ' ('+str(get_positions_data_request_result['result']['tops_dynamics']['101_10000'])+')' if get_positions_data_request_result['result']['tops_dynamics']['101_10000'] != 0 else ''
+
+            td_color_opacity_1_3 = get_positions_data_request_result['result']['tops'][1]['1_3']/phrases_total
+            td_color_opacity_1_10 = get_positions_data_request_result['result']['tops'][1]['1_10']/phrases_total
+            td_color_opacity_11_30 = get_positions_data_request_result['result']['tops'][1]['11_30']/phrases_total
+            td_color_opacity_31_100 = (get_positions_data_request_result['result']['tops'][1]['31_50']+get_positions_data_request_result['result']['tops'][1]['51_100'])/phrases_total
+            td_color_opacity_101_10000 = get_positions_data_request_result['result']['tops'][1]['101_10000']/phrases_total
+
+            result_html += '<td style="background-color: rgba(0,255,0,'+str(td_color_opacity_1_3)+')">'+str(get_positions_data_request_result['result']['tops'][1]['1_3'])+dynamics['1_3']+'</td>'
+            result_html += '<td style="background-color: rgba(0,255,0,'+str(td_color_opacity_1_10)+')">'+str(get_positions_data_request_result['result']['tops'][1]['1_10'])+dynamics['1_10']+'</td>'
+            result_html += '<td style="background-color: rgba(0,255,0,'+str(td_color_opacity_11_30)+')">'+str(get_positions_data_request_result['result']['tops'][1]['11_30'])+dynamics['11_30']+'</td>'
+            result_html += '<td style="background-color: rgba(0,255,0,'+str(td_color_opacity_31_100)+')">'+str(get_positions_data_request_result['result']['tops'][1]['31_50']+get_positions_data_request_result['result']['tops'][1]['51_100'])+dynamics['31_100']+'</td>'
+            result_html += '<td style="background-color: rgba(255,0,0,'+str(td_color_opacity_101_10000)+')">'+str(get_positions_data_request_result['result']['tops'][1]['101_10000'])+dynamics['101_10000']+'</td><td></td>'
+            
+            # print(yandex_region_key)
+            # print(google_region_key)
+            #print(get_positions_data_request_result)
+            #break
             result_html += '</tr>'
 
         result_html += '</table>'
