@@ -2,6 +2,8 @@
 
 This Django project is an all-in-one solution for building websites with templates, uploading them to a server, managing regions, and optimizing SEO. It also integrates with the TopVisor service to check SERP positions. Whether you're a small business owner or a web developer, this tool simplifies the website creation and SEO process.
 
+![UI](https://github.com/andviktor/regioncms/assets/20559261/55a73df2-a81d-4c5a-8a2c-1cd20699f78f)
+
 ## Features
 
 - **Website Builder**: Create websites using pre-designed templates.
